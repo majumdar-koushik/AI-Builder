@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <h2>My AI Assistant</h2>
+
+    <form action="/ask">
+
+        <input name="q">
+
+        <button type="submit">Ask</button>
+
+    </form>
+    <hr>
+
+    <p>{{ answer }}</p> 
+    <h3>Previous Chats</h3>
+
+    {% for chat in chats %}
+        <p>{{ chat.question }} → {{ chat.answer }}</p>
+    {% endfor %}
+
+</body>
+
+</html>
