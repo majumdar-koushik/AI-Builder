@@ -18,8 +18,8 @@ class ChatHistory(db.Model):
 with app.app_context():
     db.create_all()
 
-print("KEY USED =", os.getenv("GEMINI_KEY")[:16])
-print("MODEL =", "gemini-2.0-flash")
+#print("KEY USED =", os.getenv("GEMINI_KEY")[:16])
+#print("MODEL =", "gemini-2.0-flash")
 
 client = genai.Client(
     api_key=os.getenv("GEMINI_KEY")
