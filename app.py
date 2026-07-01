@@ -1,76 +1,90 @@
-
 from flask import Flask, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from google import genai
 from dotenv import load_dotenv
-
 import os
 
-load_dotenv()
+load_dotenv() #Read secret variables from .env
 
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///chat.db"
+app = Flask(__name__) #Create web application object.
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///chat.db"  #Database file = chat.db
+
 db = SQLAlchemy(app)
+
+
+# Database Model
 class ChatHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     question = db.Column(db.String(500))
     answer = db.Column(db.String(2000))
+
+
+# Create Database
 with app.app_context():
     db.create_all()
 
-#print("KEY USED =", os.getenv("GEMINI_KEY")[:16])
-#print("MODEL =", "gemini-2.0-flash")
 
-client = genai.Client(
-    api_key=os.getenv("GEMINI_KEY")
-)
+# Gemini Provider
+def ask_gemini(question):
+
+    client = genai.Client(
+        api_key=os.getenv("GEMINI_KEY")
+    )
+
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=question
+    )
+
+    return response.text
 
 
+# Home Page
 @app.route("/")
 def home():
-    chats = ChatHistory.query.all()
-    return render_template("index.html", answer="", chats=chats)
 
+    chats = ChatHistory.query.all()
+
+    return render_template(
+        "index.html",
+        answer="",
+        chats=chats
+    )
+
+
+# Ask Route
 @app.route("/ask")
 def ask():
 
-    question = request.args.get("q")
+    question = request.args.get("q", "")
 
     try:
-# """ """      """    response = client.models.generate_content(
-#             model="gemini-2.0-flash",
-#             contents=question
-#         ) """ """ """
-        class Fake:
-            text = "TEST ANSWER"
+        answer = ask_gemini(question)
 
-        response = Fake()
         chat = ChatHistory(
             question=question,
-            answer=response.text
+            answer=answer
         )
 
         db.session.add(chat)
         db.session.commit()
 
-
         return render_template(
             "index.html",
-            answer=response.text
+            answer=answer,
+            chats=ChatHistory.query.all()
         )
 
     except Exception as e:
 
         return render_template(
             "index.html",
-            answer="Error: " + str(e)
+            answer="Error: " + str(e),
+            chats=ChatHistory.query.all()
         )
-with app.app_context():
-    chats = ChatHistory.query.all()
-    print("TOTAL RECORDS =", len(chats))
 
-#app.run()
 
+# Run App
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
